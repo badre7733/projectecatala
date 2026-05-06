@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Laberinto de la Censura</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital@0;1&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Lora', serif;
+            color: #fff;
+            user-select: none;
+        }
+
+        /* Viñeta para oscurecer los bordes de la pantalla */
+        #vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Overlay de daño / pérdida de esperanza */
+        #damage-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(150,0,0,0.4) 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 6;
+            transition: opacity 0.2s;
+        }
+
+        /* HUD Principal */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .hud-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            color: #d4af37;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        #hope-bar-container {
+            width: 300px;
+            height: 15px;
+            background: rgba(50, 50, 50, 0.5);
+            border: 1px solid #d4af37;
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        #hope-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #8b0000, #d4af37);
+            transition: width 0.3s;
+        }
+
+        /* Nueva barra de Resistencia */
+        #stamina-bar-container {
+            width: 200px;
+            height: 8px;
+            background: rgba(50, 50, 50, 0.5);
+            border: 1px solid #aaa;
+            border-radius: 2px;
+            margin-top: 5px;
+        }
+
+        #stamina-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #2c5364, #0f2027);
+            transition: width 0.1s;
+        }
+
+        /* Sensor de proximidad */
+        #proximity-sensor {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #proximity-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #333;
+            box-shadow: 0 0 0px #d4af37;
+            transition: all 0.2s;
+        }
+
+        #score-display {
+            margin-top: 10px;
+            font-size: 1.1rem;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        /* Menús y Bloqueador */
+        #ui-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(5, 5, 5, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .panel {
+            max-width: 700px;
+            padding: 50px;
+            background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(10,10,10,0.95));
+            border: 1px solid #444;
+            border-left: 4px solid #d4af37;
+            box-shadow: 0 10px 30px rgba(0,0,0,1);
+            transition: transform 0.3s;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            color: #d4af37;
+            font-size: 3rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-style: italic;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.2rem;
+        }
+
+        p { line-height: 1.6; font-size: 1.1rem; margin-bottom: 15px; }
+
+        .btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: transparent;
+            color: #d4af37;
+            border: 2px solid #d4af37;
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .btn:hover {
+            background: #d4af37;
+            color: #000;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        }
+
+        /* Lector de Textos */
+        #reading-ui {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            max-width: 900px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid #333;
+            padding: 40px;
+            z-index: 15;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
+        }
+
+        #reading-quote {
+            font-size: 1.8rem;
+            font-style: italic;
+            color: #fff;
+            margin-bottom: 20px;
+            border-left: 3px solid #d4af37;
+            padding-left: 20px;
+        }
+
+        #reading-author {
+            font-family: 'Cinzel', serif;
+            color: #d4af37;
+            font-size: 1.2rem;
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        #reading-desc {
+            font-size: 1rem;
+            color: #aaa;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+        }
+
+        #crosshair {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 4px; height: 4px;
+            background-color: rgba(255, 255, 255, 0.7);
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="vignette"></div>
+    <div id="damage-overlay"></div>
+    <div id="crosshair"></div>
+
+    <div id="hud">
+        <div class="hud-title">Luz de la Memoria</div>
+        <div id="hope-bar-container">
+            <div id="hope-bar"></div>
+        </div>
+        <div id="stamina-bar-container">
+            <div id="stamina-bar"></div>
+        </div>
+        <div id="proximity-sensor">
+            <div id="proximity-light"></div>
+            <span>Sensor Literario</span>
+        </div>
+        <div id="score-display">Textos rescatados: <span id="score">0</span> / 5</div>
+    </div>
+
+    <div id="reading-ui">
+        <div id="reading-quote"></div>
+        <div id="reading-author"></div>
+        <div id="reading-desc"></div>
+        <div style="text-align: center; margin-top: 30px;">
+            <span style="color:#666; font-size: 0.9rem;">(Haz clic para continuar)</span>
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        <div class="panel" id="main-menu">
+            <h1>El Laberinto<br>de la Censura</h1>
+            <div class="subtitle">Cataluña, la larga noche de la posguerra.</div>
+            <p>La cultura ha sido prohibida. Las palabras son perseguidas. Te encuentras en el laberinto del silencio, un lugar donde los recuerdos se desvanecen.</p>
+            <p>Las <b>Sombras de la Censura</b> patrullan estos pasillos. Si te descubren, extinguirán tu luz y tu esperanza. Debes usar el sigilo para sobrevivir.</p>
+            <p>Encuentra los <b style="color:#d4af37">5 manifiestos literarios</b> (Mercè Rodoreda, Pere Quart, entre otros) ocultos en la oscuridad para mantener viva la memoria antes de que tu luz se apague por completo.</p>
+            
+            <div style="margin-top: 30px; text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px;">
+                <b style="color:#d4af37">Controles:</b><br>
+                • <b>W, A, S, D</b> para moverte.<br>
+                • <b>SHIFT</b> para correr (Gasta resistencia y hace ruido).<br>
+                • <b>ESPACIO</b> para "Eco de la Razón" (Ilumina el laberinto por 1s, pero cuesta esperanza).<br>
+                • <b>Ratón</b> para mirar.<br>
+            </div>
+            
+            <button class="btn" id="btn-start">Adentrarse en la Oscuridad</button>
+        </div>
+    </div>
+
+    <!-- Cargar Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- BASE DE DATOS LITERARIA ---
+        const literatureTexts = [
+            {
+                quote: "«I a dins de mi la pena... una pena que era com un tap de suro, i que d'un moment a l'altre em pensava que m'ofegaria.»",
+                author: "Mercè Rodoreda - La plaça del Diamant",
+                desc: "La opresión interiorizada. En la posguerra, el trauma no podía gritarse; se llevaba por dentro, asfixiando a una generación entera bajo el yugo de la dictadura."
+            },
+            {
+                quote: "«Una esperança desfeta, una recança infinita. I una pàtria tan petita que la somio completa.»",
+                author: "Pere Quart - Corrandes d'exili",
+                desc: "El desgarro del exilio tras la derrota republicana en 1939. La patria física se pierde, pero la identidad y el idioma se conservan en la memoria como acto de rebeldía."
+            },
+            {
+                quote: "«A vegades és necessari i forçós que un home mori per un poble, però mai no ha de morir tot un poble per un home sol.»",
+                author: "Salvador Espriu - La pell de brau",
+                desc: "Un alegato brutal contra el autoritarismo y la guerra fratricida. Espriu se convirtió en la voz ética de la resistencia frente al fascismo."
+            },
+            {
+                quote: "«No podran res davant d'un poble unit, alegre i combatiu.»",
+                author: "Vicent Andrés Estellés",
+                desc: "La literatura no solo fue lamento, sino también un arma de reconstrucción social y esperanza frente a la censura sistemática que intentó borrar la cultura."
+            },
+            {
+                quote: "«Aquell dia, m’hauria agradat de ser de suro i surar per sobre de tot, perquè em sentia molt pesada, amb l'ànima morta.»",
+                author: "Mercè Rodoreda",
+                desc: "El instinto de evasión. Frente a una realidad gris y punitiva, la imaginación y la literatura eran las únicas vías de escape para el alma."
+            }
+        ];
+
+        // --- MOTOR DEL JUEGO ---
+        let camera, scene, renderer;
+        let clock = new THREE.Clock();
+        let audioCtx; // Motor de audio procedural
+        
+        // Estado del jugador
+        let player = {
+            velocity: new THREE.Vector3(),
+            direction: new THREE.Vector3(),
+            moveForward: false, moveBackward: false, moveLeft: false, moveRight: false, isRunning: false,
+            speed: 5.0, runSpeed: 9.0, radius: 0.5,
+            hope: 100, maxHope: 100,
+            stamina: 100, maxStamina: 100,
+            score: 0,
+            bobbingTimer: 0,
+            echoCooldown: 0
+        };
+
+        // Luces del jugador
+        let playerLight, playerGlow;
+
+        // Entorno
+        const CELL_SIZE = 4;
+        const WALL_HEIGHT = 5;
+        let mapData = [];
+        let walls = [];
+        let collectibles = [];
+        let enemies = [];
+        let particles;
+
+        // UI y Estado
+        let isLocked = false;
+        let gameState = 'menu'; // menu, playing, reading, gameover, victory
+        let currentQuoteIndex = 0;
+
+        // Diseño del Nivel (1 = Pared, 0 = Pasillo, 2 = Libro, 3 = Enemigo)
+        // Laberinto diseñado para ser tenso y con múltiples rutas
+        const levelMap = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,1,2,0,0,0,3,0,0,0,2,1],
+            [1,0,1,0,1,1,1,1,1,0,1,1,1,0,1],
+            [1,0,1,0,0,0,0,0,1,0,1,0,0,0,1],
+            [1,0,1,1,1,1,1,0,1,0,1,0,1,1,1],
+            [1,0,0,0,3,0,1,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,0,1,1,1,1,1,1,1,0,1],
+            [1,2,0,0,1,0,0,0,0,0,1,2,0,0,1],
+            [1,0,1,0,1,1,1,1,1,0,1,1,1,1,1],
+            [1,0,1,0,0,0,0,0,1,3,0,0,0,0,1],
+            [1,0,1,1,1,1,1,0,1,1,1,1,1,0,1],
+            [1,0,0,0,0,0,1,0,0,0,0,0,1,0,1],
+            [1,1,1,1,1,0,1,1,1,1,1,0,1,0,1],
+            [1,2,3,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        // Elementos DOM
+        const uiLayer = document.getElementById('ui-layer');
+        const mainMenu = document.getElementById('main-menu');
+        const btnStart = document.getElementById('btn-start');
+        const hopeBar = document.getElementById('hope-bar');
+        const scoreDisplay = document.getElementById('score');
+        const readingUI = document.getElementById('reading-ui');
+        const damageOverlay = document.getElementById('damage-overlay');
+        const staminaBar = document.getElementById('stamina-bar');
+        const proximityLight = document.getElementById('proximity-light');
+
+        init();
+        animate();
+
+        // --- SISTEMA DE AUDIO PROCEDURAL ---
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'collect') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'echo') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 1.0);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.0);
+                osc.start(); osc.stop(audioCtx.currentTime + 1.0);
+            }
+        }
+
+        function init() {
+            // 1. Escena y Niebla
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x020202);
+            scene.fog = new THREE.FogExp2(0x020202, 0.08); // Niebla densa
+
+            // 2. Cámara
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+            
+            // 3. Renderizador con Sombras Avanzadas (Crucial para el "look" de concurso)
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimización
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves
+            document.body.appendChild(renderer.domElement);
+
+            // 4. Iluminación
+            const ambient = new THREE.AmbientLight(0x111115, 0.4); // Luz base ínfima
+            scene.add(ambient);
+
+            // Luz del jugador (La Esperanza)
+            playerLight = new THREE.PointLight(0xffcc55, 1.5, 12);
+            playerLight.castShadow = true;
+            playerLight.shadow.bias = -0.001;
+            playerLight.shadow.mapSize.width = 1024;
+            playerLight.shadow.mapSize.height = 1024;
+            camera.add(playerLight);
+            
+            // Un leve resplandor adicional para no ver negro total de cerca
+            playerGlow = new THREE.PointLight(0xffddaa, 0.5, 4);
+            camera.add(playerGlow);
+            scene.add(camera);
+
+            // 5. Construir el Nivel
+            buildLevel();
+            createAshes();
+
+            // 6. Eventos
+            setupControls();
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function buildLevel() {
+            // Materiales
+            const wallMat = new THREE.MeshStandardMaterial({ 
+                color: 0x1a1a1a, roughness: 0.9, metalness: 0.2 
+            });
+            const floorMat = new THREE.MeshStandardMaterial({ 
+                color: 0x0a0a0a, roughness: 0.2, metalness: 0.8 // Suelo ligeramente reflectante
+            });
+            const ceilingMat = new THREE.MeshStandardMaterial({ 
+                color: 0x050505, roughness: 1.0 
+            });
+
+            // Geometrías base
+            const wallGeo = new THREE.BoxGeometry(CELL_SIZE, WALL_HEIGHT, CELL_SIZE);
+            
+            const rows = levelMap.length;
+            const cols = levelMap[0].length;
+
+            // Crear Suelo y Techo
+            const floorGeo = new THREE.PlaneGeometry(cols * CELL_SIZE, rows * CELL_SIZE);
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set((cols*CELL_SIZE)/2 - CELL_SIZE/2, 0, (rows*CELL_SIZE)/2 - CELL_SIZE/2);
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            const ceiling = new THREE.Mesh(floorGeo, ceilingMat);
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.set((cols*CELL_SIZE)/2 - CELL_SIZE/2, WALL_HEIGHT, (rows*CELL_SIZE)/2 - CELL_SIZE/2);
+            scene.add(ceiling);
+
+            // Procesar Matriz
+            let bookIndex = 0;
+
+            for (let z = 0; z < rows; z++) {
+                for (let x = 0; x < cols; x++) {
+                    const type = levelMap[z][x];
+                    const posX = x * CELL_SIZE;
+                    const posZ = z * CELL_SIZE;
+
+                    if (type === 1) {
+                        // Pared
+                        let wall = new THREE.Mesh(wallGeo, wallMat);
+                        wall.position.set(posX, WALL_HEIGHT/2, posZ);
+                        wall.castShadow = true;
+                        wall.receiveShadow = true;
+                        scene.add(wall);
+                        
+                        // Guardar caja de colisión
+                        walls.push(new THREE.Box3().setFromObject(wall));
+                    } 
+                    else if (type === 0 && camera.position.x === 0 && camera.position.z === 0) {
+                        // Posición inicial del jugador en el primer espacio vacío
+                        camera.position.set(posX, 1.5, posZ);
+                    }
+                    else if (type === 2) {
+                        // Libro / Texto
+                        createBook(posX, posZ, bookIndex);
+                        bookIndex++;
+                    }
+                    else if (type === 3) {
+                        // Enemigo (Sombra de Censura)
+                        createEnemy(posX, posZ);
+                    }
+                }
+            }
+        }
+
+        function createBook(x, z, index) {
+            // Los libros son faros de luz dorada
+            const geo = new THREE.OctahedronGeometry(0.4);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xffd700, wireframe: true });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, 1.2, z);
+            
+            // Luz emanando del libro
+            const light = new THREE.PointLight(0xffaa00, 1, 6);
+            mesh.add(light);
+            
+            scene.add(mesh);
+            collectibles.push({ mesh: mesh, textData: literatureTexts[index], id: index });
+        }
+
+        function createEnemy(x, z) {
+            // Entidad abstracta y perturbadora
+            const geo = new THREE.CylinderGeometry(0.1, 0.5, 3, 4);
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: 0x000000, 
+                roughness: 1, 
+                emissive: 0x110000 
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, 1.5, z);
+            mesh.castShadow = true;
+
+            // Aura destructiva
+            const light = new THREE.PointLight(0xff0000, 2, 8);
+            mesh.add(light);
+
+            scene.add(mesh);
+            
+            enemies.push({
+                mesh: mesh,
+                light: light,
+                speed: 1.5 + Math.random(),
+                direction: new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5).normalize(),
+                state: 'patrol' // patrol, chase
+            });
+        }
+
+        function createAshes() {
+            // Partículas simulando ceniza cayendo (ambiente denso)
+            const particleCount = 2000;
+            const geo = new THREE.BufferGeometry();
+            const posArray = new Float32Array(particleCount * 3);
+            
+            for(let i=0; i < particleCount * 3; i++) {
+                // Distribuir en un área grande
+                posArray[i] = (Math.random() - 0.5) * 60;
+            }
+            
+            geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const mat = new THREE.PointsMaterial({
+                size: 0.05,
+                color: 0x888888,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            particles = new THREE.Points(geo, mat);
+            particles.position.set(30, 0, 30); // Centrar en el mapa aprox
+            scene.add(particles);
+        }
+
+        // --- SISTEMA DE CONTROLES Y CÁMARA ---
+        let euler = new THREE.Euler(0, 0, 0, 'YXZ');
+
+        function setupControls() {
+            btnStart.addEventListener('click', () => {
+                initAudio(); // Inicializar audio al interactuar (requerido por navegadores)
+                document.body.requestPointerLock();
+            });
+
+            document.addEventListener('pointerlockchange', () => {
+                if (document.pointerLockElement === document.body) {
+                    isLocked = true;
+                    if (gameState === 'menu') {
+                        gameState = 'playing';
+                        uiLayer.style.display = 'none';
+                    } else if (gameState === 'reading') {
+                        // Cerrar lectura
+                        gameState = 'playing';
+                        readingUI.style.opacity = '0';
+                        setTimeout(() => readingUI.style.display = 'none', 500);
+                    }
+                } else {
+                    isLocked = false;
+                    if (gameState === 'playing') {
+                        uiLayer.style.display = 'flex';
+                        mainMenu.innerHTML = `
+                            <h1>Pausa</h1>
+                            <p>La oscuridad espera...</p>
+                            <button class="btn" onclick="document.body.requestPointerLock()">Continuar</button>
+                        `;
+                    }
+                }
+            });
+
+            // Rotación del ratón
+            document.addEventListener('mousemove', (e) => {
+                if (!isLocked || gameState !== 'playing') return;
+
+                euler.setFromQuaternion(camera.quaternion);
+                euler.y -= e.movementX * 0.002;
+                euler.x -= e.movementY * 0.002;
+                euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
+                camera.quaternion.setFromEuler(euler);
+            });
+
+            // Teclado
+            document.addEventListener('keydown', (e) => {
+                if(gameState !== 'playing') return;
+                switch (e.code) {
+                    case 'KeyW': player.moveForward = true; break;
+                    case 'KeyA': player.moveLeft = true; break;
+                    case 'KeyS': player.moveBackward = true; break;
+                    case 'KeyD': player.moveRight = true; break;
+                    case 'ShiftLeft': player.isRunning = true; break;
+                    case 'Space': 
+                        // Mecánica: Eco de la Razón
+                        if (player.hope > 10 && player.echoCooldown <= 0) {
+                            player.hope -= 10;
+                            player.echoCooldown = 3.0; // 3 segundos de recarga
+                            playSound('echo');
+                            
+                            // Flash masivo
+                            const originalIntensity = playerLight.intensity;
+                            const originalDistance = playerLight.distance;
+                            
+                            playerLight.intensity = 5;
+                            playerLight.distance = 40;
+                            scene.fog.density = 0.01; // Despeja la niebla un momento
+                            
+                            // Restaurar poco a poco
+                            setTimeout(() => {
+                                let restoreInterval = setInterval(() => {
+                                    playerLight.intensity -= 0.2;
+                                    playerLight.distance -= 1.5;
+                                    scene.fog.density += 0.005;
+                                    
+                                    if(playerLight.intensity <= originalIntensity) {
+                                        playerLight.intensity = originalIntensity;
+                                        playerLight.distance = originalDistance;
+                                        scene.fog.density = 0.08;
+                                        clearInterval(restoreInterval);
+                                    }
+                                }, 50);
+                            }, 300);
+                        }
+                        break;
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                switch (e.code) {
+                    case 'KeyW': player.moveForward = false; break;
+                    case 'KeyA': player.moveLeft = false; break;
+                    case 'KeyS': player.moveBackward = false; break;
+                    case 'KeyD': player.moveRight = false; break;
+                    case 'ShiftLeft': player.isRunning = false; break;
+                }
+            });
+
+            // Clic para avanzar la lectura
+            document.addEventListener('mousedown', () => {
+                if(gameState === 'reading') {
+                    document.body.requestPointerLock(); // Volver al juego
+                }
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- LÓGICA PRINCIPAL DEL JUEGO ---
+
+        function handleMovement(delta) {
+            // Fricción
+            player.velocity.x -= player.velocity.x * 10.0 * delta;
+            player.velocity.z -= player.velocity.z * 10.0 * delta;
+
+            player.direction.z = Number(player.moveForward) - Number(player.moveBackward);
+            player.direction.x = Number(player.moveRight) - Number(player.moveLeft);
+            player.direction.normalize();
+
+            // Lógica de Resistencia (Stamina)
+            let isActuallyMoving = (player.moveForward || player.moveBackward || player.moveLeft || player.moveRight);
+            let canRun = player.isRunning && player.stamina > 0;
+            const currentSpeed = canRun ? player.runSpeed : player.speed;
+
+            if (isActuallyMoving && canRun) {
+                player.stamina -= 25 * delta; // Agotar stamina al correr
+            } else if (!canRun || !isActuallyMoving) {
+                player.stamina = Math.min(player.maxStamina, player.stamina + 15 * delta); // Recuperar
+            }
+
+            staminaBar.style.width = Math.max(0, (player.stamina / player.maxStamina) * 100) + '%';
+
+            if (player.moveForward || player.moveBackward) player.velocity.z -= player.direction.z * currentSpeed * delta;
+            if (player.moveLeft || player.moveRight) player.velocity.x -= player.direction.x * currentSpeed * delta;
+
+            // Guardar posición anterior
+            const oldX = camera.position.x;
+            const oldZ = camera.position.z;
+
+            // Mover en X y comprobar colisión
+            camera.translateX(player.velocity.x * delta);
+            if (checkWallCollision(camera.position)) {
+                camera.position.x = oldX;
+                player.velocity.x = 0;
+            }
+
+            // Mover en Z y comprobar colisión
+            camera.translateZ(player.velocity.z * delta);
+            if (checkWallCollision(camera.position)) {
+                camera.position.z = oldZ;
+                player.velocity.z = 0;
+            }
+
+            // Head Bobbing (movimiento de cámara al andar)
+            if(player.moveForward || player.moveBackward || player.moveLeft || player.moveRight) {
+                player.bobbingTimer += delta * (player.isRunning ? 15 : 10);
+                camera.position.y = 1.5 + Math.sin(player.bobbingTimer) * 0.08;
+            } else {
+                camera.position.y += (1.5 - camera.position.y) * 0.1; // Volver al centro suavemente
+            }
+        }
+
+        function checkWallCollision(pos) {
+            // Crear una pequeña caja alrededor de la cámara para la colisión
+            const playerBox = new THREE.Box3(
+                new THREE.Vector3(pos.x - player.radius, 0, pos.z - player.radius),
+                new THREE.Vector3(pos.x + player.radius, WALL_HEIGHT, pos.z + player.radius)
+            );
+
+            for (let i = 0; i < walls.length; i++) {
+                if (playerBox.intersectsBox(walls[i])) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function updateEnemies(delta) {
+            enemies.forEach(enemy => {
+                // Rotación espeluznante
+                enemy.mesh.rotation.y += delta;
+                enemy.mesh.rotation.z = Math.sin(clock.elapsedTime * 2) * 0.1;
+
+                // Lógica de visión/persecución
+                const distToPlayer = enemy.mesh.position.distanceTo(camera.position);
+                
+                // Si el jugador corre sin stamina, no hace tanto ruido. Si corre con stamina, más detección.
+                const isRunningLoud = player.isRunning && player.stamina > 0;
+                const detectionRadius = isRunningLoud ? 12 : 7; // LIGERAMENTE MÁS FÁCIL (antes 15:8)
+
+                if (distToPlayer < detectionRadius) {
+                    // Chase mode
+                    enemy.state = 'chase';
+                    enemy.light.intensity = 4; // Se vuelve más agresivo
+                    enemy.light.color.setHex(0xff0000);
+                    
+                    // Mover hacia el jugador
+                    const dir = new THREE.Vector3().subVectors(camera.position, enemy.mesh.position).normalize();
+                    enemy.direction.lerp(dir, 0.05); // Giro suave
+                    
+                    // Daño masivo por proximidad
+                    if(distToPlayer < 5) {
+                        player.hope -= 10 * delta; // LIGERAMENTE MÁS FÁCIL (antes 15)
+                        damageOverlay.style.opacity = Math.min(1, 1 - (distToPlayer/5));
+                    }
+                } else {
+                    // Patrol mode
+                    enemy.state = 'patrol';
+                    enemy.light.intensity = 2;
+                    enemy.light.color.setHex(0x550000);
+                    damageOverlay.style.opacity = 0;
+
+                    // Cambiar dirección aleatoriamente a veces
+                    if(Math.random() < 0.01) {
+                        enemy.direction.set(Math.random() - 0.5, 0, Math.random() - 0.5).normalize();
+                    }
+                }
+
+                // Mover enemigo
+                const nextPos = enemy.mesh.position.clone().add(enemy.direction.clone().multiplyScalar(enemy.speed * delta));
+                
+                // Comprobar colisiones del enemigo con las paredes
+                const enemyBox = new THREE.Box3(
+                    new THREE.Vector3(nextPos.x - 0.5, 0, nextPos.z - 0.5),
+                    new THREE.Vector3(nextPos.x + 0.5, 2, nextPos.z + 0.5)
+                );
+
+                let hitWall = false;
+                for (let w of walls) {
+                    if (enemyBox.intersectsBox(w)) {
+                        hitWall = true; break;
+                    }
+                }
+
+                if(hitWall) {
+                    // Rebotar o girar
+                    enemy.direction.reflect(new THREE.Vector3(
+                        Math.random() > 0.5 ? 1 : 0, 
+                        0, 
+                        Math.random() > 0.5 ? 1 : 0
+                    )).normalize();
+                } else {
+                    enemy.mesh.position.copy(nextPos);
+                }
+            });
+        }
+
+        function checkCollectibles() {
+            for (let i = collectibles.length - 1; i >= 0; i--) {
+                const item = collectibles[i];
+                
+                // Animación
+                item.mesh.rotation.y += 0.02;
+                item.mesh.position.y = 1.2 + Math.sin(clock.elapsedTime * 3 + i) * 0.1;
+
+                if (camera.position.distanceTo(item.mesh.position) < 1.5) {
+                    // Recoger
+                    playSound('collect');
+                    triggerReading(item.textData);
+                    
+                    scene.remove(item.mesh);
+                    collectibles.splice(i, 1);
+                    
+                    player.score++;
+                    scoreDisplay.innerText = player.score;
+                    
+                    // Restaurar esperanza y potenciar la luz
+                    player.hope = Math.min(player.maxHope, player.hope + 40);
+                    playerLight.distance += 2; // La luz crece al conseguir cultura
+
+                    if(player.score === 5) {
+                        endGame(true);
+                    }
+                }
+            }
+        }
+
+        function updateMechanics(delta) {
+            // Drenaje constante de esperanza más indulgente
+            player.hope -= 0.8 * delta; // LIGERAMENTE MÁS FÁCIL (antes 2)
+            
+            // Reducir cooldown del eco
+            if(player.echoCooldown > 0) player.echoCooldown -= delta;
+
+            // Lógica del Sensor de Proximidad
+            let closestDist = Infinity;
+            collectibles.forEach(item => {
+                const dist = camera.position.distanceTo(item.mesh.position);
+                if(dist < closestDist) closestDist = dist;
+            });
+
+            if (closestDist < 15) {
+                // Brilla si estás cerca
+                const intensity = 1 - (closestDist / 15);
+                const pulse = Math.abs(Math.sin(clock.elapsedTime * (intensity * 10))); // Pulsa más rápido
+                proximityLight.style.backgroundColor = `rgba(212, 175, 55, ${pulse})`;
+                proximityLight.style.boxShadow = `0 0 ${10 * intensity}px #d4af37`;
+            } else {
+                proximityLight.style.backgroundColor = '#333';
+                proximityLight.style.boxShadow = 'none';
+            }
+
+            // Actualizar UI
+            const hopePercent = Math.max(0, (player.hope / player.maxHope) * 100);
+            hopeBar.style.width = hopePercent + '%';
+
+            // Parpadeo de la luz si la esperanza es baja
+            if(player.hope < 30 && player.echoCooldown <= 0) { // No parpadear si se está usando el Eco
+                playerLight.intensity = 0.5 + Math.random();
+            } else if (player.echoCooldown <= 0) {
+                playerLight.intensity = 1.5;
+            }
+
+            if(player.hope <= 0) {
+                endGame(false);
+            }
+
+            // Animar partículas de ceniza
+            if(particles) {
+                const positions = particles.geometry.attributes.position.array;
+                for(let i=1; i < positions.length; i+=3) {
+                    positions[i] -= 2 * delta; // caer en Y
+                    if(positions[i] < 0) {
+                        positions[i] = 10; // resetear arriba
+                    }
+                }
+                particles.geometry.attributes.position.needsUpdate = true;
+                // Las partículas siguen al jugador lentamente para no salir del mapa
+                particles.position.lerp(new THREE.Vector3(camera.position.x, 0, camera.position.z), 0.05);
+            }
+        }
+
+        function triggerReading(data) {
+            gameState = 'reading';
+            document.exitPointerLock();
+            
+            player.moveForward = false; player.moveBackward = false;
+            player.moveLeft = false; player.moveRight = false;
+
+            document.getElementById('reading-quote').innerText = data.quote;
+            document.getElementById('reading-author').innerText = "— " + data.author;
+            document.getElementById('reading-desc').innerText = data.desc;
+
+            readingUI.style.display = 'block';
+            setTimeout(() => readingUI.style.opacity = '1', 50);
+        }
+
+        function endGame(victory) {
+            gameState = victory ? 'victory' : 'gameover';
+            document.exitPointerLock();
+            uiLayer.style.display = 'flex';
+            damageOverlay.style.opacity = 0;
+
+            if (victory) {
+                mainMenu.innerHTML = `
+                    <h1 style="color:#d4af37;">La Luz Prevalece</h1>
+                    <div class="subtitle">Has rescatado la memoria de la censura.</div>
+                    <p>Aunque la noche fue larga y los censores acechaban en cada rincón, la palabra escrita sobrevivió. La literatura de Mercè Rodoreda, Pere Quart, Espriu y tantos otros fue el hilo de luz que mantuvo viva la identidad de un pueblo durante su época más oscura.</p>
+                    <p><b>El verdadero poder de un régimen no está en la violencia física, sino en su intento de borrar el recuerdo. Al recordar, has vencido.</b></p>
+                `;
+            } else {
+                mainMenu.innerHTML = `
+                    <h1 style="color:#8b0000;">La Memoria se Apaga</h1>
+                    <div class="subtitle">La oscuridad te ha consumido.</div>
+                    <p>Sin cultura, sin palabras y sin memoria, el laberinto del silencio se traga la identidad.</p>
+                    <button class="btn" onclick="location.reload()">Volver a intentarlo</button>
+                `;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = Math.min(clock.getDelta(), 0.1); // Evitar saltos de física grandes
+
+            if (gameState === 'playing') {
+                handleMovement(delta);
+                updateEnemies(delta);
+                checkCollectibles();
+                updateMechanics(delta);
+            }
+
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
