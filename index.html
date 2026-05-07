@@ -415,7 +415,7 @@ desc: "La esperanza como memoria viva."
         const proximityLight = document.getElementById('proximity-light');
 
         init();
-        animate();
+        
 
         // --- SISTEMA DE AUDIO PROCEDURAL ---
         function initAudio() {
@@ -1046,7 +1046,7 @@ drawMinimap(
             renderer.render(scene, camera);
         }
         
-
+animate();
     // jugador
     mctx.fillStyle = "red";
     mctx.fillRect(px*scale, pz*scale, 3,3);
