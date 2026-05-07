@@ -365,7 +365,8 @@ desc: "La esperanza como memoria viva."
             bobbingTimer: 0,
             echoCooldown: 0
         };
-
+        //euler importante
+        let euler = new THREE.Euler(0, 0, 0, 'YXZ');
         // Luces del jugador
         let playerLight, playerGlow;
 
@@ -634,7 +635,7 @@ while (bookIndex < 10) {
         }
 
         // --- SISTEMA DE CONTROLES Y CÁMARA ---
-        let euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        
 
         function setupControls() {
             btnStart.addEventListener('click', () => {
