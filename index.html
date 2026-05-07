@@ -1008,23 +1008,6 @@ while (bookIndex < 10) {
             }
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-drawMinimap(
-    camera.position.x / CELL_SIZE,
-    camera.position.z / CELL_SIZE
-);
-            const delta = Math.min(clock.getDelta(), 0.1); // Evitar saltos de física grandes
-
-            if (gameState === 'playing') {
-                handleMovement(delta);
-                updateEnemies(delta);
-                checkCollectibles();
-                updateMechanics(delta);
-            }
-
-            renderer.render(scene, camera);
-        }
         const minimap = document.getElementById("minimap");
 const mctx = minimap.getContext("2d");
         function drawMinimap(px, pz) {
@@ -1045,6 +1028,24 @@ const mctx = minimap.getContext("2d");
             }
         }
     }
+        function animate() {
+            requestAnimationFrame(animate);
+drawMinimap(
+    camera.position.x / CELL_SIZE,
+    camera.position.z / CELL_SIZE
+);
+            const delta = Math.min(clock.getDelta(), 0.1); // Evitar saltos de física grandes
+
+            if (gameState === 'playing') {
+                handleMovement(delta);
+                updateEnemies(delta);
+                checkCollectibles();
+                updateMechanics(delta);
+            }
+
+            renderer.render(scene, camera);
+        }
+        
 
     // jugador
     mctx.fillStyle = "red";
