@@ -66,7 +66,7 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(90deg, #8b0000, #d4af37);
-            transition: width 0.9s;
+            transition: width 0.3s;
         }
 
         /* Nueva barra de Resistencia */
@@ -109,6 +109,24 @@
             margin-top: 10px;
             font-size: 1.1rem;
             text-shadow: 2px 2px 4px #000;
+        }
+
+        /* Minimapa */
+        #minimap-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #d4af37;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        #minimap {
+            width: 100%;
+            height: 100%;
         }
 
         /* Menús y Bloqueador */
@@ -227,21 +245,10 @@
             pointer-events: none;
             border-radius: 50%;
         }
-    #minimap {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 160px;
-    height: 160px;
-    z-index: 30;
-    border: 1px solid #d4af37;
-    background: rgba(0,0,0,0.6);
-    }
     </style>
 </head>
 <body>
 
-    <canvas id="minimap"></canvas>
     <div id="vignette"></div>
     <div id="damage-overlay"></div>
     <div id="crosshair"></div>
@@ -261,6 +268,10 @@
         <div id="score-display">Textos rescatados: <span id="score">0</span> / 10</div>
     </div>
 
+    <div id="minimap-container">
+        <canvas id="minimap"></canvas>
+    </div>
+
     <div id="reading-ui">
         <div id="reading-quote"></div>
         <div id="reading-author"></div>
@@ -276,7 +287,7 @@
             <div class="subtitle">Cataluña, la larga noche de la posguerra.</div>
             <p>La cultura ha sido prohibida. Las palabras son perseguidas. Te encuentras en el laberinto del silencio, un lugar donde los recuerdos se desvanecen.</p>
             <p>Las <b>Sombras de la Censura</b> patrullan estos pasillos. Si te descubren, extinguirán tu luz y tu esperanza. Debes usar el sigilo para sobrevivir.</p>
-            <p>Encuentra los <b style="color:#d4af37">5 manifiestos literarios</b> (Mercè Rodoreda, Pere Quart, entre otros) ocultos en la oscuridad para mantener viva la memoria antes de que tu luz se apague por completo.</p>
+            <p>Encuentra los <b style="color:#d4af37">10 manifiestos literarios</b> (Mercè Rodoreda, Pere Quart, entre otros) ocultos en la oscuridad para mantener viva la memoria antes de que tu luz se apague por completo.</p>
             
             <div style="margin-top: 30px; text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px;">
                 <b style="color:#d4af37">Controles:</b><br>
@@ -290,7 +301,6 @@
         </div>
     </div>
 
-    <!-- Cargar Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
@@ -322,30 +332,30 @@
                 desc: "El instinto de evasión. Frente a una realidad gris y punitiva, la imaginación y la literatura eran las únicas vías de escape para el alma."
             },
             {
-                quote: "«Les paraules són l’últim refugi de la llibertat.»",
-                author: "Anònim català",
-                desc: "La lengua como resistencia silenciosa."
+                quote: "«La paraula és la nostra única arma. Mentre hi hagi algú que llegeixi, la memòria no morirà.»",
+                author: "Montserrat Roig",
+                desc: "La importancia de la lectura como acto de resistencia civil en tiempos de oscuridad informativa."
             },
             {
-                quote: "«Quan el silenci creix, la memòria crida més fort.»",
-author: "Poesia clandestina",
-desc: "La memoria colectiva no puede ser borrada."
-},
-{
-quote: "«Cap mur pot tancar una idea viva.»",
-author: "Pensament prohibit",
-desc: "Las ideas sobreviven a la represión."
-},
-{
-quote: "«Escriure és recordar allò que volen esborrar.»",
-author: "Autor desconegut",
-desc: "La escritura como acto de resistencia."
-},
-{
-quote: "«La foscor només existeix si oblidem la llum.»",
-author: "Tradició oral",
-desc: "La esperanza como memoria viva."
-}
+                quote: "«M'he estimat molt la vida, no pas perquè fos vana, sinó perquè era meva.»",
+                author: "Joan Salvat-Papasseit",
+                desc: "Reivindicación de la individualidad y la alegría de vivir frente a la austeridad moral impuesta por el régimen."
+            },
+            {
+                quote: "«No sóc d’aquí ni de cap lloc, sóc de la llengua que parlo.»",
+                author: "Maria-Mercè Marçal",
+                desc: "La lengua catalana como el verdadero refugio y hogar de una identidad perseguida."
+            },
+            {
+                quote: "«Escolta, Espanya, — la veu d'un fill que et parla en llengua no castellana.»",
+                author: "Joan Maragall",
+                desc: "El grito por el reconocimiento de la pluralidad cultural y lingüística, silenciada durante décadas."
+            },
+            {
+                quote: "«Tot està per fer i tot és possible.»",
+                author: "Miquel Martí i Pol",
+                desc: "La esperanza final. A pesar de las cenizas de la posguerra, la reconstrucción cultural es un horizonte abierto."
+            }
         ];
 
         // --- MOTOR DEL JUEGO ---
@@ -365,8 +375,7 @@ desc: "La esperanza como memoria viva."
             bobbingTimer: 0,
             echoCooldown: 0
         };
-        //euler importante
-        let euler = new THREE.Euler(0, 0, 0, 'YXZ');
+
         // Luces del jugador
         let playerLight, playerGlow;
 
@@ -384,8 +393,11 @@ desc: "La esperanza como memoria viva."
         let gameState = 'menu'; // menu, playing, reading, gameover, victory
         let currentQuoteIndex = 0;
 
+        // Minimapa Canvas
+        const minimapCanvas = document.getElementById('minimap');
+        const minimapCtx = minimapCanvas.getContext('2d');
+
         // Diseño del Nivel (1 = Pared, 0 = Pasillo, 2 = Libro, 3 = Enemigo)
-        // Laberinto diseñado para ser tenso y con múltiples rutas
         const levelMap = [
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
             [1,0,0,0,1,2,0,0,0,3,0,0,0,2,1],
@@ -416,7 +428,7 @@ desc: "La esperanza como memoria viva."
         const proximityLight = document.getElementById('proximity-light');
 
         init();
-        
+        animate();
 
         // --- SISTEMA DE AUDIO PROCEDURAL ---
         function initAudio() {
@@ -434,7 +446,7 @@ desc: "La esperanza como memoria viva."
 
             if (type === 'collect') {
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime); 
                 osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
                 gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
@@ -450,67 +462,51 @@ desc: "La esperanza como memoria viva."
         }
 
         function init() {
-            // 1. Escena y Niebla
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x020202);
-            scene.fog = new THREE.FogExp2(0x020202, 0.08); // Niebla densa
+            scene.fog = new THREE.FogExp2(0x020202, 0.08);
 
-            // 2. Cámara
             camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
             
-            // 3. Renderizador con Sombras Avanzadas (Crucial para el "look" de concurso)
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimización
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras suaves
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.body.appendChild(renderer.domElement);
 
-            // 4. Iluminación
-            const ambient = new THREE.AmbientLight(0x111115, 0.4); // Luz base ínfima
+            const ambient = new THREE.AmbientLight(0x111115, 0.4);
             scene.add(ambient);
 
-            // Luz del jugador (La Esperanza)
             playerLight = new THREE.PointLight(0xffcc55, 1.5, 12);
             playerLight.castShadow = true;
             playerLight.shadow.bias = -0.001;
-            playerLight.shadow.mapSize.width = 1024;
-            playerLight.shadow.mapSize.height = 1024;
             camera.add(playerLight);
             
-            // Un leve resplandor adicional para no ver negro total de cerca
             playerGlow = new THREE.PointLight(0xffddaa, 0.5, 4);
             camera.add(playerGlow);
             scene.add(camera);
 
-            // 5. Construir el Nivel
             buildLevel();
             createAshes();
 
-            // 6. Eventos
             setupControls();
             window.addEventListener('resize', onWindowResize);
+            
+            // Setup inicial minimapa
+            minimapCanvas.width = 150;
+            minimapCanvas.height = 150;
         }
 
         function buildLevel() {
-            // Materiales
-            const wallMat = new THREE.MeshStandardMaterial({ 
-                color: 0x1a1a1a, roughness: 0.9, metalness: 0.2 
-            });
-            const floorMat = new THREE.MeshStandardMaterial({ 
-                color: 0x0a0a0a, roughness: 0.2, metalness: 0.8 // Suelo ligeramente reflectante
-            });
-            const ceilingMat = new THREE.MeshStandardMaterial({ 
-                color: 0x050505, roughness: 1.0 
-            });
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9, metalness: 0.2 });
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.2, metalness: 0.8 });
+            const ceilingMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1.0 });
 
-            // Geometrías base
             const wallGeo = new THREE.BoxGeometry(CELL_SIZE, WALL_HEIGHT, CELL_SIZE);
-            
             const rows = levelMap.length;
             const cols = levelMap[0].length;
 
-            // Crear Suelo y Techo
             const floorGeo = new THREE.PlaneGeometry(cols * CELL_SIZE, rows * CELL_SIZE);
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
@@ -523,8 +519,8 @@ desc: "La esperanza como memoria viva."
             ceiling.position.set((cols*CELL_SIZE)/2 - CELL_SIZE/2, WALL_HEIGHT, (rows*CELL_SIZE)/2 - CELL_SIZE/2);
             scene.add(ceiling);
 
-            // Procesar Matriz
             let bookIndex = 0;
+            let freeCells = [];
 
             for (let z = 0; z < rows; z++) {
                 for (let x = 0; x < cols; x++) {
@@ -533,113 +529,80 @@ desc: "La esperanza como memoria viva."
                     const posZ = z * CELL_SIZE;
 
                     if (type === 1) {
-                        // Pared
                         let wall = new THREE.Mesh(wallGeo, wallMat);
                         wall.position.set(posX, WALL_HEIGHT/2, posZ);
                         wall.castShadow = true;
                         wall.receiveShadow = true;
                         scene.add(wall);
-                        
-                        // Guardar caja de colisión
                         walls.push(new THREE.Box3().setFromObject(wall));
                     } 
-                    else if (type === 0 && camera.position.x === 0 && camera.position.z === 0) {
-                        // Posición inicial del jugador en el primer espacio vacío
-                        camera.position.set(posX, 1.5, posZ);
-                    }
-                    else if (type === 2) {
-                        // Libro / Texto
-                        createBook(posX, posZ, bookIndex);
-                        bookIndex++;
-                    }
-                    else if (type === 3) {
-                        // Enemigo (Sombra de Censura)
-                        createEnemy(posX, posZ);
+                    else {
+                        if (type === 0 && camera.position.x === 0 && camera.position.z === 0) {
+                            camera.position.set(posX, 1.5, posZ);
+                        } else if (type === 2) {
+                            createBook(posX, posZ, bookIndex++);
+                        } else if (type === 3) {
+                            createEnemy(posX, posZ);
+                        }
+                        if (type === 0) freeCells.push({x: posX, z: posZ});
                     }
                 }
             }
-            // 🔥 NUEVO: generar libros extra si faltan hasta 10
-while (bookIndex < 10) {
-    const x = Math.floor(Math.random() * 12) * CELL_SIZE;
-    const z = Math.floor(Math.random() * 12) * CELL_SIZE;
 
-    createBook(x, z, bookIndex);
-    bookIndex++;
-}
+            // Generar libros faltantes hasta llegar a 10 si el mapa tiene menos
+            while(bookIndex < 10 && freeCells.length > 0) {
+                let idx = Math.floor(Math.random() * freeCells.length);
+                let cell = freeCells.splice(idx, 1)[0];
+                createBook(cell.x, cell.z, bookIndex++);
+            }
         }
 
         function createBook(x, z, index) {
-            // Los libros son faros de luz dorada
             const geo = new THREE.OctahedronGeometry(0.4);
             const mat = new THREE.MeshBasicMaterial({ color: 0xffd700, wireframe: true });
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(x, 1.2, z);
-            
-            // Luz emanando del libro
             const light = new THREE.PointLight(0xffaa00, 1, 6);
             mesh.add(light);
-            
             scene.add(mesh);
             collectibles.push({ mesh: mesh, textData: literatureTexts[index], id: index });
         }
 
         function createEnemy(x, z) {
-            // Entidad abstracta y perturbadora
             const geo = new THREE.CylinderGeometry(0.1, 0.5, 3, 4);
-            const mat = new THREE.MeshStandardMaterial({ 
-                color: 0x000000, 
-                roughness: 1, 
-                emissive: 0x110000 
-            });
+            const mat = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 1, emissive: 0x110000 });
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(x, 1.5, z);
             mesh.castShadow = true;
-
-            // Aura destructiva
             const light = new THREE.PointLight(0xff0000, 2, 8);
             mesh.add(light);
-
             scene.add(mesh);
-            
             enemies.push({
                 mesh: mesh,
                 light: light,
                 speed: 1.5 + Math.random(),
                 direction: new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5).normalize(),
-                state: 'patrol' // patrol, chase
+                state: 'patrol'
             });
         }
 
         function createAshes() {
-            // Partículas simulando ceniza cayendo (ambiente denso)
             const particleCount = 2000;
             const geo = new THREE.BufferGeometry();
             const posArray = new Float32Array(particleCount * 3);
-            
-            for(let i=0; i < particleCount * 3; i++) {
-                // Distribuir en un área grande
-                posArray[i] = (Math.random() - 0.5) * 60;
-            }
-            
+            for(let i=0; i < particleCount * 3; i++) posArray[i] = (Math.random() - 0.5) * 60;
             geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            const mat = new THREE.PointsMaterial({
-                size: 0.05,
-                color: 0x888888,
-                transparent: true,
-                opacity: 0.6
-            });
-
+            const mat = new THREE.PointsMaterial({ size: 0.05, color: 0x888888, transparent: true, opacity: 0.6 });
             particles = new THREE.Points(geo, mat);
-            particles.position.set(30, 0, 30); // Centrar en el mapa aprox
+            particles.position.set(30, 0, 30);
             scene.add(particles);
         }
 
-        // --- SISTEMA DE CONTROLES Y CÁMARA ---
-        
+        let euler = new THREE.Euler(0, 0, 0, 'YXZ');
 
         function setupControls() {
             btnStart.addEventListener('click', () => {
-                initAudio(); // Inicializar audio al interactuar (requerido por navegadores)
+                initAudio();
                 document.body.requestPointerLock();
             });
 
@@ -650,7 +613,6 @@ while (bookIndex < 10) {
                         gameState = 'playing';
                         uiLayer.style.display = 'none';
                     } else if (gameState === 'reading') {
-                        // Cerrar lectura
                         gameState = 'playing';
                         readingUI.style.opacity = '0';
                         setTimeout(() => readingUI.style.display = 'none', 500);
@@ -659,19 +621,13 @@ while (bookIndex < 10) {
                     isLocked = false;
                     if (gameState === 'playing') {
                         uiLayer.style.display = 'flex';
-                        mainMenu.innerHTML = `
-                            <h1>Pausa</h1>
-                            <p>La oscuridad espera...</p>
-                            <button class="btn" onclick="document.body.requestPointerLock()">Continuar</button>
-                        `;
+                        mainMenu.innerHTML = `<h1>Pausa</h1><p>La oscuridad espera...</p><button class="btn" onclick="document.body.requestPointerLock()">Continuar</button>`;
                     }
                 }
             });
 
-            // Rotación del ratón
             document.addEventListener('mousemove', (e) => {
                 if (!isLocked || gameState !== 'playing') return;
-
                 euler.setFromQuaternion(camera.quaternion);
                 euler.y -= e.movementX * 0.002;
                 euler.x -= e.movementY * 0.002;
@@ -679,7 +635,6 @@ while (bookIndex < 10) {
                 camera.quaternion.setFromEuler(euler);
             });
 
-            // Teclado
             document.addEventListener('keydown', (e) => {
                 if(gameState !== 'playing') return;
                 switch (e.code) {
@@ -689,27 +644,20 @@ while (bookIndex < 10) {
                     case 'KeyD': player.moveRight = true; break;
                     case 'ShiftLeft': player.isRunning = true; break;
                     case 'Space': 
-                        // Mecánica: Eco de la Razón
                         if (player.hope > 10 && player.echoCooldown <= 0) {
                             player.hope -= 10;
-                            player.echoCooldown = 3.0; // 3 segundos de recarga
+                            player.echoCooldown = 3.0;
                             playSound('echo');
-                            
-                            // Flash masivo
                             const originalIntensity = playerLight.intensity;
                             const originalDistance = playerLight.distance;
-                            
                             playerLight.intensity = 5;
                             playerLight.distance = 40;
-                            scene.fog.density = 0.01; // Despeja la niebla un momento
-                            
-                            // Restaurar poco a poco
+                            scene.fog.density = 0.01;
                             setTimeout(() => {
                                 let restoreInterval = setInterval(() => {
                                     playerLight.intensity -= 0.2;
                                     playerLight.distance -= 1.5;
                                     scene.fog.density += 0.005;
-                                    
                                     if(playerLight.intensity <= originalIntensity) {
                                         playerLight.intensity = originalIntensity;
                                         playerLight.distance = originalDistance;
@@ -733,11 +681,8 @@ while (bookIndex < 10) {
                 }
             });
 
-            // Clic para avanzar la lectura
             document.addEventListener('mousedown', () => {
-                if(gameState === 'reading') {
-                    document.body.requestPointerLock(); // Volver al juego
-                }
+                if(gameState === 'reading') document.body.requestPointerLock();
             });
         }
 
@@ -747,183 +692,141 @@ while (bookIndex < 10) {
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- LÓGICA PRINCIPAL DEL JUEGO ---
-
         function handleMovement(delta) {
-            // Fricción
             player.velocity.x -= player.velocity.x * 10.0 * delta;
             player.velocity.z -= player.velocity.z * 10.0 * delta;
-
             player.direction.z = Number(player.moveForward) - Number(player.moveBackward);
             player.direction.x = Number(player.moveRight) - Number(player.moveLeft);
             player.direction.normalize();
 
-            // Lógica de Resistencia (Stamina)
-            let isActuallyMoving = (player.moveForward || player.moveBackward || player.moveLeft || player.moveRight);
             let canRun = player.isRunning && player.stamina > 0;
             const currentSpeed = canRun ? player.runSpeed : player.speed;
 
-            if (isActuallyMoving && canRun) {
-                player.stamina -= 25 * delta; // Agotar stamina al correr
-            } else if (!canRun || !isActuallyMoving) {
-                player.stamina = Math.min(player.maxStamina, player.stamina + 15 * delta); // Recuperar
+            if ((player.moveForward || player.moveBackward || player.moveLeft || player.moveRight) && canRun) {
+                player.stamina -= 25 * delta;
+            } else {
+                player.stamina = Math.min(player.maxStamina, player.stamina + 15 * delta);
             }
 
             staminaBar.style.width = Math.max(0, (player.stamina / player.maxStamina) * 100) + '%';
-
             if (player.moveForward || player.moveBackward) player.velocity.z -= player.direction.z * currentSpeed * delta;
             if (player.moveLeft || player.moveRight) player.velocity.x -= player.direction.x * currentSpeed * delta;
 
-            // Guardar posición anterior
             const oldX = camera.position.x;
             const oldZ = camera.position.z;
 
-            // Mover en X y comprobar colisión
             camera.translateX(player.velocity.x * delta);
-            if (checkWallCollision(camera.position)) {
-                camera.position.x = oldX;
-                player.velocity.x = 0;
-            }
-
-            // Mover en Z y comprobar colisión
+            if (checkWallCollision(camera.position)) { camera.position.x = oldX; player.velocity.x = 0; }
             camera.translateZ(player.velocity.z * delta);
-            if (checkWallCollision(camera.position)) {
-                camera.position.z = oldZ;
-                player.velocity.z = 0;
-            }
+            if (checkWallCollision(camera.position)) { camera.position.z = oldZ; player.velocity.z = 0; }
 
-            // Head Bobbing (movimiento de cámara al andar)
             if(player.moveForward || player.moveBackward || player.moveLeft || player.moveRight) {
                 player.bobbingTimer += delta * (player.isRunning ? 15 : 10);
                 camera.position.y = 1.5 + Math.sin(player.bobbingTimer) * 0.08;
             } else {
-                camera.position.y += (1.5 - camera.position.y) * 0.1; // Volver al centro suavemente
+                camera.position.y += (1.5 - camera.position.y) * 0.1;
             }
         }
 
         function checkWallCollision(pos) {
-            // Crear una pequeña caja alrededor de la cámara para la colisión
             const playerBox = new THREE.Box3(
                 new THREE.Vector3(pos.x - player.radius, 0, pos.z - player.radius),
                 new THREE.Vector3(pos.x + player.radius, WALL_HEIGHT, pos.z + player.radius)
             );
-
-            for (let i = 0; i < walls.length; i++) {
-                if (playerBox.intersectsBox(walls[i])) {
-                    return true;
-                }
-            }
+            for (let i = 0; i < walls.length; i++) { if (playerBox.intersectsBox(walls[i])) return true; }
             return false;
         }
 
         function updateEnemies(delta) {
             enemies.forEach(enemy => {
-                // Rotación espeluznante
                 enemy.mesh.rotation.y += delta;
-                enemy.mesh.rotation.z = Math.sin(clock.elapsedTime * 2) * 0.1;
-
-                // Lógica de visión/persecución
                 const distToPlayer = enemy.mesh.position.distanceTo(camera.position);
-                
-                // Si el jugador corre sin stamina, no hace tanto ruido. Si corre con stamina, más detección.
                 const isRunningLoud = player.isRunning && player.stamina > 0;
-                const detectionRadius = isRunningLoud ? 12 : 7; // LIGERAMENTE MÁS FÁCIL (antes 15:8)
+                const detectionRadius = isRunningLoud ? 12 : 7;
 
                 if (distToPlayer < detectionRadius) {
-                    // Chase mode
                     enemy.state = 'chase';
-                    enemy.light.intensity = 4; // Se vuelve más agresivo
+                    enemy.light.intensity = 4;
                     enemy.light.color.setHex(0xff0000);
-                    
-                    // Mover hacia el jugador
                     const dir = new THREE.Vector3().subVectors(camera.position, enemy.mesh.position).normalize();
-                    enemy.direction.lerp(dir, 0.05); // Giro suave
-                    
-                    // Daño masivo por proximidad
+                    enemy.direction.lerp(dir, 0.05);
                     if(distToPlayer < 5) {
-                        player.hope -= 10 * delta; // LIGERAMENTE MÁS FÁCIL (antes 15)
+                        player.hope -= 10 * delta;
                         damageOverlay.style.opacity = Math.min(1, 1 - (distToPlayer/5));
                     }
                 } else {
-                    // Patrol mode
                     enemy.state = 'patrol';
                     enemy.light.intensity = 2;
                     enemy.light.color.setHex(0x550000);
-                    damageOverlay.style.opacity = 0;
-
-                    // Cambiar dirección aleatoriamente a veces
-                    if(Math.random() < 0.01) {
-                        enemy.direction.set(Math.random() - 0.5, 0, Math.random() - 0.5).normalize();
-                    }
+                    if(Math.random() < 0.01) enemy.direction.set(Math.random() - 0.5, 0, Math.random() - 0.5).normalize();
                 }
 
-                // Mover enemigo
                 const nextPos = enemy.mesh.position.clone().add(enemy.direction.clone().multiplyScalar(enemy.speed * delta));
-                
-                // Comprobar colisiones del enemigo con las paredes
-                const enemyBox = new THREE.Box3(
-                    new THREE.Vector3(nextPos.x - 0.5, 0, nextPos.z - 0.5),
-                    new THREE.Vector3(nextPos.x + 0.5, 2, nextPos.z + 0.5)
-                );
-
+                const enemyBox = new THREE.Box3(new THREE.Vector3(nextPos.x - 0.5, 0, nextPos.z - 0.5), new THREE.Vector3(nextPos.x + 0.5, 2, nextPos.z + 0.5));
                 let hitWall = false;
-                for (let w of walls) {
-                    if (enemyBox.intersectsBox(w)) {
-                        hitWall = true; break;
-                    }
-                }
-
-                if(hitWall) {
-                    // Rebotar o girar
-                    enemy.direction.reflect(new THREE.Vector3(
-                        Math.random() > 0.5 ? 1 : 0, 
-                        0, 
-                        Math.random() > 0.5 ? 1 : 0
-                    )).normalize();
-                } else {
-                    enemy.mesh.position.copy(nextPos);
-                }
+                for (let w of walls) { if (enemyBox.intersectsBox(w)) { hitWall = true; break; } }
+                if(hitWall) { enemy.direction.reflect(new THREE.Vector3(Math.random() > 0.5 ? 1 : 0, 0, Math.random() > 0.5 ? 1 : 0)).normalize(); } 
+                else { enemy.mesh.position.copy(nextPos); }
             });
+        }
+
+        function drawMinimap() {
+            minimapCtx.fillStyle = 'black';
+            minimapCtx.fillRect(0, 0, 150, 150);
+            const scale = 150 / (levelMap.length * CELL_SIZE);
+            
+            // Dibujar Paredes
+            minimapCtx.fillStyle = '#333';
+            for (let z = 0; z < levelMap.length; z++) {
+                for (let x = 0; x < levelMap[0].length; x++) {
+                    if (levelMap[z][x] === 1) minimapCtx.fillRect(x * CELL_SIZE * scale, z * CELL_SIZE * scale, CELL_SIZE * scale, CELL_SIZE * scale);
+                }
+            }
+            
+            // Dibujar Coleccionables
+            minimapCtx.fillStyle = '#d4af37';
+            collectibles.forEach(c => {
+                minimapCtx.beginPath();
+                minimapCtx.arc(c.mesh.position.x * scale, c.mesh.position.z * scale, 2, 0, Math.PI * 2);
+                minimapCtx.fill();
+            });
+
+            // Dibujar Enemigos
+            minimapCtx.fillStyle = 'red';
+            enemies.forEach(e => {
+                minimapCtx.fillRect(e.mesh.position.x * scale - 1, e.mesh.position.z * scale - 1, 3, 3);
+            });
+
+            // Dibujar Jugador
+            minimapCtx.fillStyle = 'white';
+            minimapCtx.beginPath();
+            minimapCtx.arc(camera.position.x * scale, camera.position.z * scale, 3, 0, Math.PI * 2);
+            minimapCtx.fill();
         }
 
         function checkCollectibles() {
             for (let i = collectibles.length - 1; i >= 0; i--) {
                 const item = collectibles[i];
-                
-                // Animación
                 item.mesh.rotation.y += 0.02;
-                item.mesh.position.y = 1.2 + Math.sin(clock.elapsedTime * 3 + i) * 0.1;
-
                 if (camera.position.distanceTo(item.mesh.position) < 1.5) {
-                    // Recoger
                     playSound('collect');
                     triggerReading(item.textData);
-                    
                     scene.remove(item.mesh);
                     collectibles.splice(i, 1);
-                    
                     player.score++;
                     scoreDisplay.innerText = player.score;
-                    
-                    // Restaurar esperanza y potenciar la luz
                     player.hope = Math.min(player.maxHope, player.hope + 40);
-                    playerLight.distance += 2; // La luz crece al conseguir cultura
-
-                    if(player.score === 10) {
-                        endGame(true);
-                    }
+                    playerLight.distance += 1.5;
+                    if(player.score === 10) endGame(true);
                 }
             }
         }
 
         function updateMechanics(delta) {
-            // Drenaje constante de esperanza más indulgente
-            player.hope -= 0.8 * delta; // LIGERAMENTE MÁS FÁCIL (antes 2)
+            // Memoria (hope-bar) x3 más lenta: 0.9 (original era ~2.0 o 0.8 en tu versión simplificada)
+            player.hope -= 0.3 * delta; 
             
-            // Reducir cooldown del eco
             if(player.echoCooldown > 0) player.echoCooldown -= delta;
-
-            // Lógica del Sensor de Proximidad
             let closestDist = Infinity;
             collectibles.forEach(item => {
                 const dist = camera.position.distanceTo(item.mesh.position);
@@ -931,9 +834,8 @@ while (bookIndex < 10) {
             });
 
             if (closestDist < 15) {
-                // Brilla si estás cerca
                 const intensity = 1 - (closestDist / 15);
-                const pulse = Math.abs(Math.sin(clock.elapsedTime * (intensity * 10))); // Pulsa más rápido
+                const pulse = Math.abs(Math.sin(clock.elapsedTime * (intensity * 10)));
                 proximityLight.style.backgroundColor = `rgba(212, 175, 55, ${pulse})`;
                 proximityLight.style.boxShadow = `0 0 ${10 * intensity}px #d4af37`;
             } else {
@@ -941,47 +843,30 @@ while (bookIndex < 10) {
                 proximityLight.style.boxShadow = 'none';
             }
 
-            // Actualizar UI
-            const hopePercent = Math.max(0, (player.hope / player.maxHope) * 100);
-            hopeBar.style.width = hopePercent + '%';
+            hopeBar.style.width = Math.max(0, (player.hope / player.maxHope) * 100) + '%';
+            if(player.hope < 30 && player.echoCooldown <= 0) playerLight.intensity = 0.5 + Math.random();
+            else if (player.echoCooldown <= 0) playerLight.intensity = 1.5;
+            if(player.hope <= 0) endGame(false);
 
-            // Parpadeo de la luz si la esperanza es baja
-            if(player.hope < 30 && player.echoCooldown <= 0) { // No parpadear si se está usando el Eco
-                playerLight.intensity = 0.5 + Math.random();
-            } else if (player.echoCooldown <= 0) {
-                playerLight.intensity = 1.5;
-            }
-
-            if(player.hope <= 0) {
-                endGame(false);
-            }
-
-            // Animar partículas de ceniza
             if(particles) {
                 const positions = particles.geometry.attributes.position.array;
                 for(let i=1; i < positions.length; i+=3) {
-                    positions[i] -= 2 * delta; // caer en Y
-                    if(positions[i] < 0) {
-                        positions[i] = 10; // resetear arriba
-                    }
+                    positions[i] -= 2 * delta;
+                    if(positions[i] < 0) positions[i] = 10;
                 }
                 particles.geometry.attributes.position.needsUpdate = true;
-                // Las partículas siguen al jugador lentamente para no salir del mapa
                 particles.position.lerp(new THREE.Vector3(camera.position.x, 0, camera.position.z), 0.05);
             }
+            drawMinimap();
         }
 
         function triggerReading(data) {
             gameState = 'reading';
             document.exitPointerLock();
-            
-            player.moveForward = false; player.moveBackward = false;
-            player.moveLeft = false; player.moveRight = false;
-
+            player.moveForward = false; player.moveBackward = false; player.moveLeft = false; player.moveRight = false;
             document.getElementById('reading-quote').innerText = data.quote;
             document.getElementById('reading-author').innerText = "— " + data.author;
             document.getElementById('reading-desc').innerText = data.desc;
-
             readingUI.style.display = 'block';
             setTimeout(() => readingUI.style.opacity = '1', 50);
         }
@@ -990,68 +875,24 @@ while (bookIndex < 10) {
             gameState = victory ? 'victory' : 'gameover';
             document.exitPointerLock();
             uiLayer.style.display = 'flex';
-            damageOverlay.style.opacity = 0;
-
             if (victory) {
-                mainMenu.innerHTML = `
-                    <h1 style="color:#d4af37;">La Luz Prevalece</h1>
-                    <div class="subtitle">Has rescatado la memoria de la censura.</div>
-                    <p>Aunque la noche fue larga y los censores acechaban en cada rincón, la palabra escrita sobrevivió. La literatura de Mercè Rodoreda, Pere Quart, Espriu y tantos otros fue el hilo de luz que mantuvo viva la identidad de un pueblo durante su época más oscura.</p>
-                    <p><b>El verdadero poder de un régimen no está en la violencia física, sino en su intento de borrar el recuerdo. Al recordar, has vencido.</b></p>
-                `;
+                mainMenu.innerHTML = `<h1 style="color:#d4af37;">La Luz Prevalece</h1><div class="subtitle">Has rescatado los 10 fragmentos de la memoria.</div><p>Has vencido al silencio sistemático. Al recordar las palabras de Rodoreda, Espriu, Marçal y Martí i Pol, has asegurado que la cultura no muera en el laberinto.</p><button class="btn" onclick="location.reload()">Renacer</button>`;
             } else {
-                mainMenu.innerHTML = `
-                    <h1 style="color:#8b0000;">La Memoria se Apaga</h1>
-                    <div class="subtitle">La oscuridad te ha consumido.</div>
-                    <p>Sin cultura, sin palabras y sin memoria, el laberinto del silencio se traga la identidad.</p>
-                    <button class="btn" onclick="location.reload()">Volver a intentarlo</button>
-                `;
+                mainMenu.innerHTML = `<h1 style="color:#8b0000;">La Memoria se Apaga</h1><div class="subtitle">La oscuridad te ha consumido.</div><p>Sin cultura, el laberinto del silencio se traga la identidad.</p><button class="btn" onclick="location.reload()">Volver a intentarlo</button>`;
             }
         }
 
-        const minimap = document.getElementById("minimap");
-const mctx = minimap.getContext("2d");
-        function drawMinimap(px, pz) {
-    const size = minimap.width;
-    const scale = size / levelMap.length;
-
-    mctx.clearRect(0,0,size,size);
-
-    for(let z=0; z<levelMap.length; z++){
-        for(let x=0; x<levelMap[z].length; x++){
-            if(levelMap[z][x] === 1){
-                mctx.fillStyle = "#333";
-                mctx.fillRect(x*scale, z*scale, scale, scale);
-            }
-            if(levelMap[z][x] === 2){
-                mctx.fillStyle = "#d4af37";
-                mctx.fillRect(x*scale, z*scale, scale, scale);
-            }
-        }
-    }
         function animate() {
             requestAnimationFrame(animate);
-drawMinimap(
-    camera.position.x / CELL_SIZE,
-    camera.position.z / CELL_SIZE
-);
-            const delta = Math.min(clock.getDelta(), 0.1); // Evitar saltos de física grandes
-
+            const delta = Math.min(clock.getDelta(), 0.1);
             if (gameState === 'playing') {
                 handleMovement(delta);
                 updateEnemies(delta);
                 checkCollectibles();
                 updateMechanics(delta);
             }
-
             renderer.render(scene, camera);
         }
-        
-animate();
-    // jugador
-    mctx.fillStyle = "red";
-    mctx.fillRect(px*scale, pz*scale, 3,3);
-}
     </script>
 </body>
 </html>
