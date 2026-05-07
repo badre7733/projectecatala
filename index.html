@@ -66,7 +66,7 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(90deg, #8b0000, #d4af37);
-            transition: width 0.3s;
+            transition: width 0.9s;
         }
 
         /* Nueva barra de Resistencia */
@@ -227,10 +227,21 @@
             pointer-events: none;
             border-radius: 50%;
         }
+    #minimap {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 160px;
+    height: 160px;
+    z-index: 30;
+    border: 1px solid #d4af37;
+    background: rgba(0,0,0,0.6);
+    }
     </style>
 </head>
 <body>
 
+    <canvas id="minimap"></canvas>
     <div id="vignette"></div>
     <div id="damage-overlay"></div>
     <div id="crosshair"></div>
@@ -247,7 +258,7 @@
             <div id="proximity-light"></div>
             <span>Sensor Literario</span>
         </div>
-        <div id="score-display">Textos rescatados: <span id="score">0</span> / 5</div>
+        <div id="score-display">Textos rescatados: <span id="score">0</span> / 10</div>
     </div>
 
     <div id="reading-ui">
@@ -309,7 +320,32 @@
                 quote: "«Aquell dia, m’hauria agradat de ser de suro i surar per sobre de tot, perquè em sentia molt pesada, amb l'ànima morta.»",
                 author: "Mercè Rodoreda",
                 desc: "El instinto de evasión. Frente a una realidad gris y punitiva, la imaginación y la literatura eran las únicas vías de escape para el alma."
-            }
+            },
+            {
+                quote: "«Les paraules són l’últim refugi de la llibertat.»",
+                author: "Anònim català",
+                desc: "La lengua como resistencia silenciosa."
+            },
+            {
+                quote: "«Quan el silenci creix, la memòria crida més fort.»",
+author: "Poesia clandestina",
+desc: "La memoria colectiva no puede ser borrada."
+},
+{
+quote: "«Cap mur pot tancar una idea viva.»",
+author: "Pensament prohibit",
+desc: "Las ideas sobreviven a la represión."
+},
+{
+quote: "«Escriure és recordar allò que volen esborrar.»",
+author: "Autor desconegut",
+desc: "La escritura como acto de resistencia."
+},
+{
+quote: "«La foscor només existeix si oblidem la llum.»",
+author: "Tradició oral",
+desc: "La esperanza como memoria viva."
+}
         ];
 
         // --- MOTOR DEL JUEGO ---
@@ -521,6 +557,14 @@
                     }
                 }
             }
+            // 🔥 NUEVO: generar libros extra si faltan hasta 10
+while (bookIndex < 10) {
+    const x = Math.floor(Math.random() * 12) * CELL_SIZE;
+    const z = Math.floor(Math.random() * 12) * CELL_SIZE;
+
+    createBook(x, z, bookIndex);
+    bookIndex++;
+}
         }
 
         function createBook(x, z, index) {
@@ -864,7 +908,7 @@
                     player.hope = Math.min(player.maxHope, player.hope + 40);
                     playerLight.distance += 2; // La luz crece al conseguir cultura
 
-                    if(player.score === 5) {
+                    if(player.score === 10) {
                         endGame(true);
                     }
                 }
@@ -966,7 +1010,10 @@
 
         function animate() {
             requestAnimationFrame(animate);
-
+drawMinimap(
+    camera.position.x / CELL_SIZE,
+    camera.position.z / CELL_SIZE
+);
             const delta = Math.min(clock.getDelta(), 0.1); // Evitar saltos de física grandes
 
             if (gameState === 'playing') {
@@ -978,6 +1025,31 @@
 
             renderer.render(scene, camera);
         }
+        const minimap = document.getElementById("minimap");
+const mctx = minimap.getContext("2d");
+        function drawMinimap(px, pz) {
+    const size = minimap.width;
+    const scale = size / levelMap.length;
+
+    mctx.clearRect(0,0,size,size);
+
+    for(let z=0; z<levelMap.length; z++){
+        for(let x=0; x<levelMap[z].length; x++){
+            if(levelMap[z][x] === 1){
+                mctx.fillStyle = "#333";
+                mctx.fillRect(x*scale, z*scale, scale, scale);
+            }
+            if(levelMap[z][x] === 2){
+                mctx.fillStyle = "#d4af37";
+                mctx.fillRect(x*scale, z*scale, scale, scale);
+            }
+        }
+    }
+
+    // jugador
+    mctx.fillStyle = "red";
+    mctx.fillRect(px*scale, pz*scale, 3,3);
+}
     </script>
 </body>
 </html>
