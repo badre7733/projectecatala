@@ -302,12 +302,12 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
-<script>
+
+
+    <script>
+// 🔊 AQUÍ SOLO LA CLASE
 class VoiceAI {
-
     constructor(){
-
         this.recognition =
             new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 
@@ -321,26 +321,17 @@ class VoiceAI {
     }
 
     init(){
-
         this.recognition.onresult = (event) => {
-
             const text =
                 event.results[event.results.length - 1][0]
                 .transcript
                 .toLowerCase()
                 .trim();
 
-            console.log("🎤:", text);
-
             const cmd = this.parse(text);
-
             if(cmd && this.onCommand){
                 this.onCommand(cmd);
             }
-        };
-
-        this.recognition.onerror = (e) => {
-            console.log("VOICE ERROR:", e);
         };
 
         this.recognition.onend = () => {
@@ -349,87 +340,23 @@ class VoiceAI {
 
         document.addEventListener("click", () => {
             this.recognition.start();
-            console.log("🎤 VOZ ACTIVADA");
         }, { once: true });
     }
 
     parse(text){
-
         if(text.includes("derecha")) return "RIGHT";
         if(text.includes("izquierda")) return "LEFT";
         if(text.includes("adelante")) return "FORWARD";
         if(text.includes("atrás") || text.includes("atras")) return "BACK";
-
         if(text.includes("ilumina")) return "LIGHT";
         if(text.includes("pausa")) return "PAUSE";
-        if(text.includes("corre") || text.includes("sprint")) return "RUN";
-
+        if(text.includes("corre")) return "RUN";
         return null;
-
     }
-
-    //voz2
-    const voice = new VoiceAI();
-
-voice.onCommand = (cmd) => {
-
-    console.log("CMD:", cmd);
-
-    switch(cmd){
-
-        case "RIGHT":
-            moverDerecha();
-            break;
-
-        case "LEFT":
-            moverIzquierda();
-            break;
-
-        case "FORWARD":
-            moverAdelante();
-            break;
-
-        case "BACK":
-            moverAtras();
-            break;
-
-        case "LIGHT":
-            iluminar();
-            break;
-
-        case "PAUSE":
-            pausarJuego();
-            break;
-
-        case "RUN":
-            correr();
-            break;
-    }
-};
 }
-</script>   
-    
+</script>
+
     <script>
-
-        //----ia voz---
-        const voice = new VoiceAI();
-
-voice.onCommand = (cmd) => {
-
-    console.log(cmd);
-
-    switch(cmd){
-
-        case "RIGHT": moverDerecha(); break;
-        case "LEFT": moverIzquierda(); break;
-        case "FORWARD": moverAdelante(); break;
-        case "BACK": moverAtras(); break;
-        case "LIGHT": iluminar(); break;
-        case "PAUSE": pausarJuego(); break;
-        case "RUN": correr(); break;
-    }
-};
-        teclas = window.teclas;
         // --- BASE DE DATOS LITERARIA ---
         const literatureTexts = [
             {
@@ -1019,6 +946,67 @@ voice.onCommand = (cmd) => {
             }
             renderer.render(scene, camera);
         }
+        
+function pressKey(code){
+
+    document.dispatchEvent(new KeyboardEvent('keydown', {
+        code: code
+    }));
+
+    setTimeout(() => {
+        document.dispatchEvent(new KeyboardEvent('keyup', {
+            code: code
+        }));
+    }, 200);
+}
+function moverDerecha(){
+    pressKey("KeyD");
+}
+
+function moverIzquierda(){
+    pressKey("KeyA");
+}
+
+function moverAdelante(){
+    pressKey("KeyW");
+}
+
+function moverAtras(){
+    pressKey("KeyS");
+}
+
+function correr(){
+    pressKey("ShiftLeft");
+}
+
+function pausarJuego(){
+    pressKey("Escape");
+}
+
+function iluminar(){
+    pressKey("Space");
+}
+    </script>
+    <script>
+// 🎤 AQUÍ SE USA LA CLASE
+
+const voice = new VoiceAI();
+
+voice.onCommand = (cmd) => {
+
+    console.log("CMD:", cmd);
+
+    switch(cmd){
+
+        case "RIGHT": moverDerecha(); break;
+        case "LEFT": moverIzquierda(); break;
+        case "FORWARD": moverAdelante(); break;
+        case "BACK": moverAtras(); break;
+        case "LIGHT": iluminar(); break;
+        case "PAUSE": pausarJuego(); break;
+        case "RUN": correr(); break;
+    }
+};
 </script>
 </body>
 </html>
