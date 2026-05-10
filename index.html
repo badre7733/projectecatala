@@ -899,134 +899,109 @@
         }
     </script>
 <script>
-// =========================
-// IA DE VOZ
-// =========================
+class VoiceAI {
 
-const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
+    constructor(){
 
-const recognition = new SpeechRecognition();
+        this.recognition =
+            new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 
-recognition.lang = "es-ES";
-recognition.continuous = true;
-recognition.interimResults = false;
+        this.recognition.lang = "es-ES";
+        this.recognition.continuous = true;
+        this.recognition.interimResults = false;
 
-console.log("🎤 IA iniciada");
+        this.onCommand = null;
 
-recognition.start();
-
-// =========================
-// COMANDOS
-// =========================
-
-recognition.onresult = (event) => {
-
-    const texto =
-        event.results[event.results.length - 1][0]
-        .transcript
-        .toLowerCase();
-
-    console.log("📢", texto);
-
-    // DERECHA = D
-    if(texto.includes("derecha")){
-
-        teclas["d"] = true;
-
-        setTimeout(() => {
-            teclas["d"] = false;
-        }, 120);
+        this.init();
     }
 
-    // IZQUIERDA = A
-    else if(texto.includes("izquierda")){
+    init(){
 
-        teclas["a"] = true;
+        this.recognition.onresult = (event) => {
 
-        setTimeout(() => {
-            teclas["a"] = false;
-        }, 120);
+            const text =
+                event.results[event.results.length - 1][0]
+                .transcript
+                .toLowerCase()
+                .trim();
+
+            console.log("🎤:", text);
+
+            const cmd = this.parse(text);
+
+            if(cmd && this.onCommand){
+                this.onCommand(cmd);
+            }
+        };
+
+        this.recognition.onerror = (e) => {
+            console.log("VOICE ERROR:", e);
+        };
+
+        this.recognition.onend = () => {
+            this.recognition.start();
+        };
+
+        document.addEventListener("click", () => {
+            this.recognition.start();
+            console.log("🎤 VOZ ACTIVADA");
+        }, { once: true });
     }
 
-    // ADELANTE = W
-    else if(texto.includes("adelante")){
+    parse(text){
 
-        teclas["w"] = true;
+        if(text.includes("derecha")) return "RIGHT";
+        if(text.includes("izquierda")) return "LEFT";
+        if(text.includes("adelante")) return "FORWARD";
+        if(text.includes("atrás") || text.includes("atras")) return "BACK";
 
-        setTimeout(() => {
-            teclas["w"] = false;
-        }, 120);
+        if(text.includes("ilumina")) return "LIGHT";
+        if(text.includes("pausa")) return "PAUSE";
+        if(text.includes("corre") || text.includes("sprint")) return "RUN";
+
+        return null;
+
     }
 
-    // ATRAS = S
-    else if(
-        texto.includes("atrás") ||
-        texto.includes("atras")
-    ){
+    //voz2
+    const voice = new VoiceAI();
 
-        teclas["s"] = true;
+voice.onCommand = (cmd) => {
 
-        setTimeout(() => {
-            teclas["s"] = false;
-        }, 120);
-    }
+    console.log("CMD:", cmd);
 
-    // ILUMINA = SPACEBAR
-    else if(texto.includes("ilumina")){
+    switch(cmd){
 
-        teclas["Space"] = true;
+        case "RIGHT":
+            moverDerecha();
+            break;
 
-        setTimeout(() => {
-            teclas[" "] = false;
-        }, 120);
-    }
+        case "LEFT":
+            moverIzquierda();
+            break;
 
-    // PAUSA = ESC
-    else if(texto.includes("pausa")){
+        case "FORWARD":
+            moverAdelante();
+            break;
 
-        teclas["escape"] = true;
+        case "BACK":
+            moverAtras();
+            break;
 
-        setTimeout(() => {
-            teclas["escape"] = false;
-        }, 120);
-    }
+        case "LIGHT":
+            iluminar();
+            break;
 
-    // CORRER = SHIFT 5s
-    else if(texto.includes("corre")){
+        case "PAUSE":
+            pausarJuego();
+            break;
 
-        teclas["shift"] = true;
-
-        setTimeout(() => {
-
-            teclas["shift"] = false;
-
-        }, 5000);
+        case "RUN":
+            correr();
+            break;
     }
 };
-
-// =========================
-// REINICIO AUTOMÁTICO
-// =========================
-
-recognition.onend = () => {
-
-    console.log("🔄 Reiniciando IA...");
-
-    recognition.start();
-};
-
-// =========================
-// ERRORES
-// =========================
-
-recognition.onerror = (e) => {
-
-    console.error("❌", e);
-};
-
-
+}
 </script>
 </body>
 </html>
