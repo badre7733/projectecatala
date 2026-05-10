@@ -894,5 +894,135 @@
             renderer.render(scene, camera);
         }
     </script>
+<script>
+// =========================
+// IA DE VOZ
+// =========================
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+const recognition = new SpeechRecognition();
+
+recognition.lang = "es-ES";
+recognition.continuous = true;
+recognition.interimResults = false;
+
+console.log("🎤 IA iniciada");
+
+recognition.start();
+
+// =========================
+// COMANDOS
+// =========================
+
+recognition.onresult = (event) => {
+
+    const texto =
+        event.results[event.results.length - 1][0]
+        .transcript
+        .toLowerCase();
+
+    console.log("📢", texto);
+
+    // DERECHA = D
+    if(texto.includes("derecha")){
+
+        teclas["d"] = true;
+
+        setTimeout(() => {
+            teclas["d"] = false;
+        }, 120);
+    }
+
+    // IZQUIERDA = A
+    else if(texto.includes("izquierda")){
+
+        teclas["a"] = true;
+
+        setTimeout(() => {
+            teclas["a"] = false;
+        }, 120);
+    }
+
+    // ADELANTE = W
+    else if(texto.includes("adelante")){
+
+        teclas["w"] = true;
+
+        setTimeout(() => {
+            teclas["w"] = false;
+        }, 120);
+    }
+
+    // ATRAS = S
+    else if(
+        texto.includes("atrás") ||
+        texto.includes("atras")
+    ){
+
+        teclas["s"] = true;
+
+        setTimeout(() => {
+            teclas["s"] = false;
+        }, 120);
+    }
+
+    // ILUMINA = SPACEBAR
+    else if(texto.includes("ilumina")){
+
+        teclas[" "] = true;
+
+        setTimeout(() => {
+            teclas[" "] = false;
+        }, 120);
+    }
+
+    // PAUSA = ESC
+    else if(texto.includes("pausa")){
+
+        teclas["escape"] = true;
+
+        setTimeout(() => {
+            teclas["escape"] = false;
+        }, 120);
+    }
+
+    // CORRER = SHIFT 5s
+    else if(texto.includes("corre")){
+
+        teclas["shift"] = true;
+
+        setTimeout(() => {
+
+            teclas["shift"] = false;
+
+        }, 5000);
+    }
+};
+
+// =========================
+// REINICIO AUTOMÁTICO
+// =========================
+
+recognition.onend = () => {
+
+    console.log("🔄 Reiniciando IA...");
+
+    recognition.start();
+};
+
+// =========================
+// ERRORES
+// =========================
+
+recognition.onerror = (e) => {
+
+    console.error("❌", e);
+};
+
+
+</script>
 </body>
 </html>
