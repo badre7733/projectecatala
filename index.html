@@ -287,17 +287,17 @@
             <div class="subtitle">Catalunya, la llarga nit de la postguerra</div>
             <p>La cultura ha estat prohibida. Les paraules son perseguides. Et trobes en el laberint del silenci, un lloc on els records desapareixen</p>
             <p>Les <b>Ombra de la Censura</b> vigilen els pasadisos. Si et troben, et treuran la teva llum i esperança. Hauràs d'utilitzar el silenci al teu favor.</p>
-            <p>Encuentra los <b style="color:#d4af37">10 manifiestos literarios</b>ocultos en la oscuridad para mantener viva la memoria antes de que tu luz se apague por completo.</p>
+            <p>Encuentra los <b style="color:#d4af37">10 manifestos literariris </b>amagats a la foscor per mantenir viva la memoria abans de que la llum s'apagui per complet.</p>
             
             <div style="margin-top: 30px; text-align: left; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px;">
-                <b style="color:#d4af37">Controles:</b><br>
-                • <b>W, A, S, D</b> para moverte.<br>
-                • <b>SHIFT</b> para correr (Gasta resistencia y hace ruido).<br>
-                • <b>ESPACIO</b> para "Eco de la Razón" (Ilumina el laberinto por 1s, pero cuesta esperanza).<br>
-                • <b>Ratón</b> para mirar.<br>
+                <b style="color:#d4af37">Controls:</b><br>
+                • <b>W, A, S, D</b> per mouret.<br>
+                • <b>SHIFT</b> per correr (Gasta resistencia i fa soroll).<br>
+                • <b>ESPACIO</b> per "Eco de la Raó" (Ilumina el laberint per 1s, però costa esperança).<br>
+                • <b>Ratón</b> per mirar.<br>
             </div>
             
-            <button class="btn" id="btn-start">Adentrarse en la Oscuridad</button>
+            <button class="btn" id="btn-start">Endinar-se a la foscor</button>
         </div>
     </div>
 
@@ -674,7 +674,7 @@ class VoiceAI {
                     isLocked = false;
                     if (gameState === 'playing') {
                         uiLayer.style.display = 'flex';
-                        mainMenu.innerHTML = `<h1>Pausa</h1><p>La oscuridad espera...</p><button class="btn" onclick="document.body.requestPointerLock()">Continuar</button>`;
+                        mainMenu.innerHTML = `<h1>Pausa</h1><p>La foscor espera...</p><button class="btn" onclick="document.body.requestPointerLock()">Continuar</button>`;
                     }
                 }
             });
@@ -929,9 +929,9 @@ class VoiceAI {
             document.exitPointerLock();
             uiLayer.style.display = 'flex';
             if (victory) {
-                mainMenu.innerHTML = `<h1 style="color:#d4af37;">La Luz Prevalece</h1><div class="subtitle">Has rescatado los 10 fragmentos de la memoria.</div><p>Has vencido al silencio sistemático. Al recordar las palabras de Rodoreda, Espriu, Marçal y Martí i Pol, has asegurado que la cultura no muera en el laberinto.</p><button class="btn" onclick="location.reload()">Renacer</button>`;
+                mainMenu.innerHTML = `<h1 style="color:#d4af37;">La Luz Prevalece</h1><div class="subtitle">Has rescatat els 10 fragments de la memoria.</div><p>Has vençut el silenci sistemático. Al recordar les paraules de Pere Quart, has asegurat que la cultura no es mori en el laberint.</p><button class="btn" onclick="location.reload()">Renacer</button>`;
             } else {
-                mainMenu.innerHTML = `<h1 style="color:#8b0000;">La Memoria se Apaga</h1><div class="subtitle">La oscuridad te ha consumido.</div><p>Sin cultura, el laberinto del silencio se traga la identidad.</p><button class="btn" onclick="location.reload()">Volver a intentarlo</button>`;
+                mainMenu.innerHTML = `<h1 style="color:#8b0000;">La Memoria s'apaga</h1><div class="subtitle">La foscor t'ha consumit.</div><p>Sense cultura, el laberint del silenci es traga la identidad.</p><button class="btn" onclick="location.reload()">Volver a intentarlo</button>`;
             }
         }
 
